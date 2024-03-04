@@ -11,7 +11,7 @@ print(env.action_space.n)
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
-EPISODES = 8000
+EPISODES = 4000
 
 SHOW_EVERY = 2000
 
@@ -60,7 +60,6 @@ for episode in range(EPISODES):
         epsilon -= epsilon_decay_value
 
     ep_rewards.append(episode_reward)
-
     if not episode % SHOW_EVERY:
         average_reward = sum(ep_rewards[-SHOW_EVERY:])/len(ep_rewards[-SHOW_EVERY:])
         aggr_ep_rewards['ep'].append(episode)
@@ -77,3 +76,4 @@ plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['min'], label='min')
 plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['max'], label='max')
 plt.legend(loc=4)
 plt.show()
+plt.savefig('fig.png')

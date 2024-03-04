@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
 from gridworld import GridWorld
 
 world = \
