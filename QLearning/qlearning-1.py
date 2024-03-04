@@ -11,7 +11,7 @@ print(env.action_space.n)
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
-EPISODES = 25000
+EPISODES = 8000
 
 SHOW_EVERY = 2000
 
