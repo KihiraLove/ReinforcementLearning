@@ -50,12 +50,6 @@ world = \
     wwwwwwwwwwwwwwwwwwwwwwwww
     """
 
-start_q_table = None
-episode_rewards = []
-
-style.use("ggplot")
-
-
 #########################
 # Environment
 # My environment is a rewritten version of GridWorld
@@ -241,16 +235,36 @@ class GridWorld:
 # Environment ends here
 #########################
 
-env = GridWorld(world, slip=0.2)
+style.use("ggplot")
 
-for i in range(2):  # Number of episodes
-    curr_state = env.reset()
+slip = 0.1
+alpha = config.LEARNING_RATE
+gamma = config.DISCOUNT
+epsilon = config.epsilon
+
+env = GridWorld(world, slip)
+
+episode_rewards = []
+q_table = np.zeros((env.state_count, env.action_size))
+
+for episode in range(config.EPISODES):
+    state = env.reset()
+    render = False
     done = False
+
+    if episode % config.SHOW_EVERY:
+        print(f"on # {episode}, epsilon: {epsilon}")
+        print(f"{config.SHOW_EVERY} ep mean {np.mean(episode_rewards[-config.SHOW_EVERY:])}")
+        render = True
+    else:
+        render = False
+
     while not done:
-        env.render()  # [Optional] only if you want to monitor the progress
-        action = env.random_action()  # Select by the agent's policy
-        next_state, reward, done, info = env.step(action)  # Openai-gym like interface
-        print(f"<S,A,R,S'>=<{curr_state},{action},{reward},{next_state}>")
-        curr_state = next_state
-        time.sleep(0.001)  # Just to see the actions
-env.close()  # Must close when rendering is enabled
+        if render:
+            env.render()
+        
+
+
+
+    if render:
+        env.close()
