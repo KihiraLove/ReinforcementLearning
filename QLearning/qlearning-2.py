@@ -20,7 +20,7 @@ start_q_table = None  # or file name
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
 PLAYER_N = 1
-FOOD_N = 1
+FOOD_N = 2
 ENEMY_N = 3
 d = {1: (255, 175, 0), 2: (0, 255, 0), 3: (0, 0, 255)}  # BGR color dictionary
 episode_rewards = []
@@ -46,6 +46,14 @@ class Blob:
             self.move(x=-1, y=1)
         elif choice == 3:
             self.move(x=1, y=-1)
+        elif choice == 4:
+            self.move(x=0, y=1)
+        elif choice == 5:
+            self.move(x=0, y=-1)
+        elif choice == 6:
+            self.move(x=1, y=0)
+        elif choice == 7:
+            self.move(x=-1, y=0)
 
     def move(self, x=False, y=False):
         if not x:
@@ -74,7 +82,9 @@ if start_q_table is None:
         for y1 in range(-SIZE + 1, SIZE):
             for x2 in range(-SIZE + 1, SIZE):
                 for y2 in range(-SIZE + 1, SIZE):
-                    q_table[((x1, y1), (x2, y2))] = [np.random.uniform(-5, 0) for i in range(4)]
+                    q_table[((x1, y1), (x2, y2))] = [np.random.uniform(-5, 0) for i in range(8)]
+
+        print(f"not dead yet{x1}")
 else:
     with open(start_q_table, "rb") as f:
         q_table = pickle.load(f)
@@ -97,4 +107,61 @@ for episode in range(HM_EPISODES):
         if np.random.random() > epsilon:
             action = np.argmax(q_table[obs])
         else:
-            action = np.random.randint(0, 4)
+            action = np.random.randint(0, 8)
+
+        player.action(action)
+
+        if player.x == enemy.x and player.y == enemy.y:
+            reward = -ENEMY_PENALTY
+        elif player.x == food.x and player.y == food.y:
+            reward = FOOD_REWARD
+        else:
+            reward = -MOVE_PENALTY
+
+        new_obs = (player - food, player - enemy)
+        max_future_q = np.max(q_table[new_obs])
+        current_q = q_table[obs][action]
+
+        if reward == FOOD_REWARD:
+            new_q = FOOD_REWARD
+        elif reward == -ENEMY_PENALTY:
+            new_q = -ENEMY_PENALTY
+        else:
+            new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+
+        q_table[obs][action] = new_q
+
+        if show:
+            env = np.zeros((SIZE, SIZE, 3), dtype=np.uint8)
+            env[food.y][food.x] = d[FOOD_N]
+            env[player.y][player.x] = d[PLAYER_N]
+            env[enemy.y][enemy.x] = d[ENEMY_N]
+
+            img = Image.fromarray(env, "RGB")
+            img = img.resize((300, 300),resample=Image.BOX)
+            cv2.imshow("Q-Learning", np.array(img))
+
+            if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:
+                if cv2.waitKey(500) & 0xFF == ord('q'):
+                    break
+            else:
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+        episode_reward += reward
+        if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:
+            break
+
+    episode_rewards.append(episode_reward)
+    epsilon *= EPS_DECAY
+
+moving_avg = np.convolve(episode_rewards, np.ones((SHOW_EVERY,)) / SHOW_EVERY, mode="valid")
+
+plt.plot(moving_avg)
+plt.ylabel(f"Reward {SHOW_EVERY}")
+plt.xlabel("Episode number")
+plt.show()
+
+with open(f"qtable-{int(time.time())}.pickle", "wb") as f:
+    pickle.dump(q_table, f)
+
