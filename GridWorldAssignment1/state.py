@@ -13,6 +13,10 @@ class State(pg.sprite.Sprite):
         self.pos = pg.Vector2(col, row)
         self.set_pixel_position()
 
+    def default_state(self):
+        self.image = pg.Surface(config.get_block_dimensions())
+        self.image.fill(self.color)
+
     def set_pixel_position(self):
         self.rect.x = self.pos.x * config.BLOCK_SIZE
         self.rect.y = self.pos.y * config.BLOCK_SIZE

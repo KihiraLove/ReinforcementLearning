@@ -19,9 +19,8 @@ def get_state_symbol(state_type):
 
 
 class Agent(pg.sprite.Sprite):
-    def __init__(self, col, row, log):
+    def __init__(self, col, row):
         super().__init__()
-        self.log = log
         fpath = pkg_resources.resource_filename(__name__, 'images/agent.png')
         self.image = pg.transform.scale(pg.image.load(fpath), config.get_block_dimensions())
         self.rect = self.image.get_rect()
@@ -52,8 +51,6 @@ class Agent(pg.sprite.Sprite):
                 break
         self.set_pixel_position()
         next_state = state_dict[(self.pos.x, self.pos.y)]
-        if self.log:
-            print(next_state)
         return next_state
 
     def get_view_state(self, state_dict):
@@ -75,8 +72,6 @@ class Agent(pg.sprite.Sprite):
         if np.abs(curr_state_type) == 2:  # terminal states (-2: hole, +2: goal)
             state_view[half_height - 0, half_width - 0] = curr_state_type
         state = np.rot90(np.fliplr(state_view))
-        if self.log:
-            print(state)
         return state
 
     def re_initialize_agent(self):

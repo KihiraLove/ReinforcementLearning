@@ -12,8 +12,8 @@ EPSILON_DECAY: float = 0.9998
 SHOW_EVERY: int = 2000
 LEARNING_RATE: float = 0.1
 DISCOUNT: float = 0.95
-BLOCK_SIZE: int = 50  # 50px
-VIEW_SIZE: int = 10  # 10px
+BLOCK_SIZE: int = 25  # in pixel
+VIEW_SIZE: int = 10  # in pixel
 
 
 def get_block_dimensions() -> Tuple[int, int]:
