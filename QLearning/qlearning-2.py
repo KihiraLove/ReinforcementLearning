@@ -161,6 +161,7 @@ plt.plot(moving_avg)
 plt.ylabel(f"Reward {SHOW_EVERY}")
 plt.xlabel("Episode number")
 plt.show()
+plt.savefig("fig.png")
 
 with open(f"qtable-{int(time.time())}.pickle", "wb") as f:
     pickle.dump(q_table, f)

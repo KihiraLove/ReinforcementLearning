@@ -42,6 +42,7 @@ class NStepQLearningAgent:
             # Remove the oldest experience from the buffer
             self.experience_buffer.pop(0)
 
+
     def train(self, num_episodes, env):
         for episode in range(num_episodes):
             state = env.reset()
