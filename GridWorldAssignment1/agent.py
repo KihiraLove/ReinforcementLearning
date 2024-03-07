@@ -22,7 +22,11 @@ class Agent(pg.sprite.Sprite):
     def __init__(self, col, row):
         super().__init__()
         fpath = pkg_resources.resource_filename(__name__, 'images/agent.png')
-        self.image = pg.transform.scale(pg.image.load(fpath), config.get_block_dimensions())
+        try:
+            self.image = pg.transform.scale(pg.image.load(fpath), config.get_block_dimensions())
+        except FileNotFoundError:
+            self.image = pg.Surface(config.get_block_dimensions())
+            self.image.fill((0, 51, 255))
         self.rect = self.image.get_rect()
         self.initial_position = pg.Vector2(col, row)
 

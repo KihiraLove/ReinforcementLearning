@@ -1,25 +1,27 @@
 from typing import Tuple
 
-GOAL_REWARD: int = 100
-SMALL_REWARD: int = 5
-TREE_COST: int = 50
-MOVE_COST: int = 1
-HOLE_PENALTY: int = 1000
+GOAL_REWARD: int = 300  # Reward for reaching g state
+SMALL_REWARD: int = 5  # Reward for reaching s state
+TREE_COST: int = 10  # Cost to cross f state
+MOVE_COST: int = 1  # Cost to cross ' ' state
+HOLE_PENALTY: int = 1000  # Penalty for reaching o state
 
-TIMEOUT = 1000
-TIMEOUT_PENALTY = 200
+# At TIMEOUT = 1000 steps the agent is greatly disinclined from exploring, and chose to end episodes quickly
+# with world2 the agent prioritizes ending the episode quickly with a hole rather than exploring
+TIMEOUT = 1500  # Number of steps in an episode before timeout penalty
+TIMEOUT_PENALTY = 100  # Penalty for timing out
 
-EPISODES: int = 1000
-SHOW_EVERY: int = 100
+ITERATIONS: int = 10  # NUmber of training iterations
+EPISODES: int = 500  # Number of episodes
+EPISODES_IN_GROUP: int = 5  # Number of episodes in a group
 
-EPSILON_DECAY: float = 0.9998
 LEARNING_RATE: float = 0.1
 DISCOUNT: float = 0.95
 EPSILONS: Tuple[float, float, float] = (0.1, 0.2, 0.3)
 N_STEP_PARAMETERS: Tuple[int, int, int] = (1, 2, 3)
 
-BLOCK_SIZE: int = 25  # in pixel
-VIEW_SIZE: int = 10  # in pixel
+BLOCK_SIZE: int = 25  # in pixel, used for rendering
+VIEW_SIZE: int = 10  # in pixel, used for rendering
 
 
 def get_block_dimensions() -> Tuple[int, int]:

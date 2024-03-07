@@ -1,5 +1,5 @@
-import time
-import config
+import os
+from typing import Tuple
 from agent import Agent
 from wall import Wall
 from state import State
@@ -13,7 +13,119 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 from gym.spaces import Discrete
 from collections import defaultdict
-from PIL import Image
+
+style.use("seaborn-v0_8-whitegrid")
+np.random.seed(42)
+
+#########################
+# Author: Domonkos Kertesz (doker24)
+# Date: 07.03.2024.
+# This one file holds the environment and the Q learning algorithm.
+#
+# Running this file will result in training 9 configurations for my Q-learning algorithm
+# A png file will be created for all configurations in the working directory
+# !Running this file will result in generating the following file structure if config.LOGGING = True!
+# root
+#   └── world1
+#          └── 1_step
+#               └── 0.1
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.2
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.3
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#          └── 2_step
+#               └── 0.1
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.2
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.3
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#          └── 3_step
+#               └── 0.1
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.2
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.3
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#   └── world2
+#          └── 1_step
+#               └── 0.1
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.2
+# #                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+# #                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.3
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#          └── 2_step
+#               └── 0.1
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.2
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.3
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#          └── 3_step
+#               └── 0.1
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.2
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#               └── 0.3
+#                   └── [ ending_causes1.png, ... , ending_causes10.png ]
+#                   └── [ learning_curve1.png, ... , learning_curve10.png ]
+#########################
+#########################
+# Config
+# This class holds the input parameters for the algorithm and values for rendering.
+#########################
+
+
+class config:
+    LOGGING: bool = True
+
+    GOAL_REWARD: int = 1000  # Reward for reaching g state
+    SMALL_REWARD: int = 5  # Reward for reaching s state
+    TREE_COST: int = 10  # Cost to cross f state
+    MOVE_COST: int = 1  # Cost to cross ' ' state
+    HOLE_PENALTY: int = 1000  # Penalty for reaching o state
+
+    # At TIMEOUT = 1000 steps the agent is greatly disinclined from exploring, and chose to end episodes quickly
+    # with world2 the agent prioritizes ending the episode quickly with a hole rather than exploring
+    TIMEOUT = 1500  # Number of steps in an episode before timeout penalty
+    TIMEOUT_PENALTY = 100  # Penalty for timing out
+
+    ITERATIONS: int = 10  # NUmber of training iterations
+    EPISODES: int = 500  # Number of episodes
+    EPISODES_IN_GROUP: int = 5  # Number of episodes in a group
+
+    LEARNING_RATE: float = 0.1
+    DISCOUNT: float = 0.95
+    EPSILONS: Tuple[float, float, float] = (0.1, 0.2, 0.3)
+    N_STEP_PARAMETERS: Tuple[int, int, int] = (1, 2, 3)
+
+    BLOCK_SIZE: int = 25  # in pixel, used for rendering
+    VIEW_SIZE: int = 10  # in pixel, used for rendering
+
+    def get_block_dimensions(self) -> Tuple[int, int]:
+        return self.BLOCK_SIZE, self.BLOCK_SIZE
+
+    def get_view_dimensions(self) -> Tuple[int, int]:
+        return self.VIEW_SIZE, self.VIEW_SIZE
 
 
 #########################
@@ -94,19 +206,9 @@ class GridWorld:
         self.P_sas, self.R_sa = self.build_model(self.slip)
         self.reset()
 
-    def random_action(self):
-        return np.random.choice(self.action_values)
-
     def reset(self):
         self.agent.re_initialize_agent()
         return self.state_dict[(self.agent.initial_position.x, self.agent.initial_position.y)]['state']
-
-    def get_action_with_probof_slip(self, action):
-        individual_slip = self.slip / 3
-        prob = [individual_slip for a in self.action_values]
-        prob[action] = 1 - self.slip
-        act = np.random.choice(self.action_values, p=prob)
-        return act
 
     def step(self, action, testing=False):
         action = self.action_map[action]
@@ -132,38 +234,6 @@ class GridWorld:
     def close(self):
         self.render_first = True
         pg.quit()
-
-    def __set_policy(self, policy):
-        for i, act in enumerate(policy):
-            self.policy[i] = self.action_map[act]
-        for s in self.state_group:
-            s.change_with_policy(self.state_dict, self.policy)
-
-    def __unset_policy(self):
-        self.policy = {}
-        for s in self.state_group:
-            s.default_state()
-
-    def draw(self):
-        screen = pg.display.set_mode((self.columns * config.BLOCK_SIZE, self.rows * config.BLOCK_SIZE))
-        screen.fill(self.state_color)
-        self.wall_group.draw(screen)
-        self.state_group.draw(screen)
-        self.goal_group.draw(screen)
-        self.agent.draw(screen)
-        pg.display.update()
-        pg.display.flip()
-        return screen
-
-    def get_screenshot(self, policy=None):
-        if policy is not None:
-            self.__set_policy(policy)
-        pg.init()
-        screen = self.draw()
-        image = pg.surfarray.array3d(screen).transpose(1, 0, 2)
-        self.__unset_policy()
-        pg.quit()
-        return image
 
     def build_model(self, slip):
         state_action_state_probability_array = np.zeros((self.state_count, self.action_size, self.state_count),
@@ -196,76 +266,152 @@ class GridWorld:
 # Environment ends here
 #########################
 
-def chose_action(state):
+def chose_action(s, q_table, eps, env):
     # Epsilon greedy policy
-    if np.random.rand() < epsilon:
+    if np.random.rand() < eps:
         # Exploration
         return np.random.choice(env.action_size)
     else:
         # Exploitation
-        return np.argmax(q_table[state, :])
+        return np.argmax(q_table[s, :])
 
 
-style.use("ggplot")
-np.random.seed(42)
+def update_q_table(exp_buffer, gamma, alpha, q_table, next_state):
+    # Calculate N-step count from length of experience buffer
+    n = len(exp_buffer)
+    # Retrieve the oldest experience for N-step update
+    n_step_experience = exp_buffer[0]
+    # Calculate the N-step return
+    n_step_return = sum([gamma ** i * exp[2] for i, exp in enumerate(exp_buffer)])
+    # Update Q-value for the state-action pair in the oldest experience
+    if next_state is not None:
+        q_table[n_step_experience[0], n_step_experience[1]] += \
+            alpha * (n_step_return + gamma ** n * np.max(q_table[next_state, :])
+                     - q_table[n_step_experience[0], n_step_experience[1]])
+    else:
+        # Update Q-values for the last state-action pair/pairs if the agent reaches a goal state
+        q_table[n_step_experience[0], n_step_experience[1]] += alpha * (
+                n_step_return - q_table[n_step_experience[0], n_step_experience[1]])
+    # Remove the oldest experience from buffer
+    exp_buffer.pop(0)
+    return q_table, exp_buffer
+
+
+def train(world, n, gamma, alpha, epsilon, iteration):
+    env = GridWorld(world[1], epsilon)
+    q_table = np.zeros((env.state_count, env.action_size))
+    episode_rewards = []
+    episode_ending_cause = [0, 0, 0]
+    steps = []
+    for episode in range(config.EPISODES):
+        state = env.reset()
+        done = False
+        experience_buffer = []
+        total_reward = 0
+
+        if episode % config.EPISODES_IN_GROUP == 0 and episode != 0 and config.LOGGING:
+            print(f"on # {episode}, epsilon: {epsilon}")
+            print(f"{config.EPISODES_IN_GROUP} ep mean {np.mean(episode_rewards[-config.EPISODES_IN_GROUP:])}")
+
+        step = 0
+        while not done:
+            action = chose_action(state, q_table, epsilon, env)
+            next_state, reward, done, _ = env.step(action)
+            # Log the reason for ending the episode
+            if done:
+                steps.append(step)
+                if reward == config.SMALL_REWARD:
+                    episode_ending_cause[0] += 1
+                elif reward == config.GOAL_REWARD:
+                    episode_ending_cause[1] += 1
+                elif reward == -config.HOLE_PENALTY:
+                    episode_ending_cause[2] += 1
+            # Apply timeout penalty for each step after timeout
+            if step > config.TIMEOUT and False:
+                reward -= config.TIMEOUT_PENALTY
+
+            total_reward += reward
+            experience = (state, action, reward)
+            experience_buffer.append(experience)
+            # Check is the buffer has enough experience for an N-step update
+            if len(experience_buffer) >= n:
+                q_table, experience_buffer = update_q_table(experience_buffer, gamma, alpha, q_table, next_state)
+                if done:
+                    # Update the remaining states from the buffer after reaching a goal state
+                    while len(experience_buffer) > 0:
+                        q_table, experience_buffer = update_q_table(experience_buffer, gamma, alpha, q_table, None)
+
+            state = next_state
+            step += 1
+
+        episode_rewards.append(total_reward)
+        experience_buffer.clear()
+
+    print("Training configuration:", world[0], "N-step:", n, "epsilon:", epsilon, "iteration:", iteration+1)
+    print("Number of episodes ended by reaching the Goal state:", episode_ending_cause[1])
+    print("Number of episodes ended by reaching the Small Goal state:", episode_ending_cause[0])
+    print("Number of episodes ended by reaching the Hole state:", episode_ending_cause[2])
+    print("############################################")
+    return episode_rewards, episode_ending_cause, steps
+
 
 # w = wall
 # a = agent or starting position
 # g = goal
 # s = small amount of reward
-# f = tree
-# ' ' = empty tile
+# f = tree/forest (High movement cost)
+# ' ' = empty tile (Normal movement cost)
 # o = hole
-world = \
+world_1 = \
     """
     wwwwwwwwwwwwwwwwwwwwwwwww
-    w                       w
-    w                       w
-    w    fffff              w
-    w   ffffff              w
-    wffffffffff             w
-    w    s   ff             w
-    w         f             w
-    w                       w
-    w         a             w
-    w                       w
-    w                       w
-    w                       w
-    w                       w
+    w                 ffffffw
+    w   a              fffffw
+    w                   ffffw
+    wffffff              fffw
+    wfffffffff            ffw
+    wfffffffffff            w
+    wffffffffffff           w
+    wffffffffffff           w
+    w        ffff           w
+    w    s    fff           w
     w                       w
     w                       w
     w                       w
     w                       w
     w                       w
-    wff                     w
-    wffff                   w
-    wfffff                  w
-    wffffff                 w
-    wfffffff               gw
+    w                       w
+    w                       w
+    w                       w
+    wff                  gggw
+    wffff               ggggw
+    wfffff             gggggw
+    wffffff           ggggggw
+    wfffffff         gggggggw
     wwwwwwwwwwwwwwwwwwwwwwwww
     """
 
-world2 = \
+world_2 = \
     """
     wwwwwwwwwwwwwwwwwwwwwwwww
     wa               ooooooow
     w                 oooooow
-    w    ooooo          oooow
-    w   oooooo            oow
-    wooooooooooo            w
-    w oooo   oo             w
-    w         o             w
+    wooooo              oooow
+    woooooo               oow
+    woooooo                 w
+    w oooo                  w
     w                       w
     w                       w
-    w               oooooooow
-    w               oooo    w
+    w                       w
+    w                 oooooow
+    w                 oo    w
     w                       w
     woooooo                 w
     w                       w
     w       ooooo         oow
     w                       w
     w       oooooo          w
-    w         oooooo        w
+    w         ooooo         w
     wff       ooooo         w
     wffff      ooo          w
     wfffff                  w
@@ -274,73 +420,75 @@ world2 = \
     wwwwwwwwwwwwwwwwwwwwwwwww
     """
 
-worlds = [world, world2]
-alpha = config.LEARNING_RATE
-gamma = config.DISCOUNT
-epsilon = config.EPSILONS[0]
-n = config.N_STEP_PARAMETERS[0]
+worlds = [("world1", world_1), ("world2", world_2)]
+for world in worlds:
+    for n in config.N_STEP_PARAMETERS:
+        for epsilon in config.EPSILONS:
+            all_episode_rewards = []
+            all_ending_causes = []
+            all_step_count = []
 
-env = GridWorld(world, epsilon)
+            #  Check for directory tree, create directories in current working directory
+            if config.LOGGING:
+                current_directory = os.getcwd()
+                world_dir = os.path.join(current_directory, "world" + str(worlds.index(world) + 1))
+                step_dir = os.path.join(world_dir, str(n) + "_step")
+                epsilon_dir = os.path.join(step_dir, str(epsilon))
+                if not os.path.exists(world_dir):
+                    os.makedirs(world_dir)
+                if not os.path.exists(step_dir):
+                    os.makedirs(step_dir)
+                if not os.path.exists(epsilon_dir):
+                    os.makedirs(epsilon_dir)
 
-episode_rewards = []
-q_table = np.zeros((env.state_count, env.action_size))
+            for it in range(config.ITERATIONS):
+                #  Train algorithm and collect data for current iteration
+                ep_rew, end_cause, st = train(world, n, config.DISCOUNT, config.LEARNING_RATE, epsilon, it)
+                all_episode_rewards.append(ep_rew)
+                all_ending_causes.append(end_cause)
+                all_step_count.append(st)
 
-for episode in range(config.EPISODES):
-    state = env.reset()
-    render = False
-    done = False
-    experience_buffer = []
-    total_reward = 0
+                if config.LOGGING:
+                    #  Save the learning curve of a given iteration to the respective folder
+                    moving_avg = np.convolve(ep_rew, np.ones((config.EPISODES_IN_GROUP,)) / config.EPISODES_IN_GROUP, mode="valid")
+                    plt.plot(moving_avg, color='red', label="Learning curve")
+                    plt.title(f"Learning curve of world{worlds.index(world) + 1} {n}-step epsilon: {epsilon} iteration: {it+1}")
+                    plt.ylabel(f"Reward {config.EPISODES_IN_GROUP}")
+                    plt.xlabel("Episode number")
+                    plt.savefig(epsilon_dir + f"/learning_curve_{it+1}.png")
+                    plt.close()
 
-    if episode % config.SHOW_EVERY == 0 and episode != 0:
-        print(f"on # {episode}, epsilon: {epsilon}")
-        print(f"{config.SHOW_EVERY} ep mean {np.mean(episode_rewards[-config.SHOW_EVERY:])}")
-        render = False
-    else:
-        render = False
+                    #  Save the causes of the episodes ending of a given iteration to the respective folder
+                    ending_cause_names = ["goal", "small goal", "hole"]
+                    ending_causes = [all_ending_causes[0][1], all_ending_causes[0][0], all_ending_causes[0][2]]
+                    plt.bar(ending_cause_names, ending_causes, width=1, edgecolor="white", linewidth=0.7)
+                    plt.title(f"Episode end causes of world{worlds.index(world) + 1} {n}-step epsilon: {epsilon} iteration: {it+1}")
+                    plt.ylabel("Number of causes")
+                    plt.xlabel("Type of cause")
+                    plt.savefig(epsilon_dir + f"/ending_causes_{it+1}.png")
+                    plt.close()
 
-    i = 0
-    while not done:
-        if render:
-            env.render()
+            mean_rewards = []
+            for iteration_rewards in all_episode_rewards:
+                groups = []
+                # Split the episode rewards into groups according to the configuration, get the mean of each group
+                for i in range(0, len(iteration_rewards), config.EPISODES_IN_GROUP):
+                    groups.append(iteration_rewards[i:i + config.EPISODES_IN_GROUP])
+                mean_group_rewards = [np.mean(group) for group in groups]
+                mean_rewards.append(mean_group_rewards)
 
-        action = chose_action(state)
-        next_state, reward, done, _ = env.step(action)
-        if i > config.TIMEOUT:
-            reward -= config.TIMEOUT_PENALTY
-        total_reward += reward
-        experience = (state, action, reward)
-        experience_buffer.append(experience)
-        # check is the buffer has enough experience for an N-step update
-        if len(experience_buffer) >= n:
-            # Retrieve the oldest experience for N-step update
-            n_step_experience = experience_buffer[0]
-            # Calculate the N-step return
-            n_step_return = sum([gamma ** i * experience[2] for i, experience in enumerate(experience_buffer)])
-            # Update Q-value for the state-action pair in the N-step experience
-            q_table[n_step_experience[0], n_step_experience[1]] += \
-                alpha * (n_step_return - q_table[n_step_experience[0], n_step_experience[1]])
-            # Remove the oldest experience from buffer
-            experience_buffer.pop(0)
-        state = next_state
-        if render:
-            time.sleep(0.01)
-
-        if done and episode % config.SHOW_EVERY == 0:
-            print(f"step count: {i}")
-
-        i += 1
-
-    episode_rewards.append(total_reward)
-    experience_buffer = []
-
-    if render:
-        env.close()
-
-moving_avg = np.convolve(episode_rewards, np.ones((config.SHOW_EVERY,)) / config.SHOW_EVERY, mode="valid")
-
-plt.plot(moving_avg)
-plt.ylabel(f"Reward {config.SHOW_EVERY}")
-plt.xlabel("Episode number")
-plt.savefig("fig.png")
-plt.show()
+            #  Stack the means and calculate standard error
+            stacked_means = np.vstack(mean_rewards)
+            standard_errors = np.std(stacked_means, axis=0) / np.sqrt(stacked_means.shape[0])
+            #  Plot the learning curve over 10 iterations, rewards grouped, and standard error
+            plt.plot(np.arange(1, len(mean_rewards[0]) + 1) * config.EPISODES_IN_GROUP, np.mean(mean_rewards, axis=0), label='Mean', color='red')
+            plt.fill_between(np.arange(1, len(mean_rewards[0]) + 1) * config.EPISODES_IN_GROUP,
+                             np.mean(mean_rewards, axis=0) - standard_errors,
+                             np.mean(mean_rewards, axis=0) + standard_errors,
+                             color='black', alpha=0.2, label='Standard Error')
+            plt.xlabel('Episodes')
+            plt.ylabel('Total Reward')
+            plt.title('Mean Reward with Standard Error')
+            plt.legend()
+            plt.savefig(f"Learning_curve_world{worlds.index(world) + 1}_{n}-step_epsilon_{epsilon}.png")
+            plt.close()
