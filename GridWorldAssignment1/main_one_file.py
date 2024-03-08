@@ -23,11 +23,11 @@ np.random.seed(42)
 #         Q-Learning specifically: lines 440 - 458
 #                          Worlds: lines 526 - 581
 #                        Training: lines 584 - 610
-# Calculating values and plotting: lines 612 - 655
+# Calculating values and plotting: lines 612 - 677
 #
 # The environment can load and render with or without the directory of images
 # Running this file will result in training 9 configurations for my Q-learning algorithm
-# A png file will be created for all configurations in the working directory
+# Two png files will be created for all configurations in the working directory (1 for learning curve over 10 iterations, 1 for showing why episodes ended)
 #
 # !Running this file will result in generating the following file structure if config.LOGGING = True!
 # root
@@ -621,7 +621,7 @@ for world in worlds:
 
                     #  Save the causes of the episodes ending of a given iteration to the respective folder
                     ending_cause_names = ["goal", "small goal", "hole"]
-                    ending_causes = [all_ending_causes[0][1], all_ending_causes[0][0], all_ending_causes[0][2]]
+                    ending_causes = [end_cause[1], end_cause[0], end_cause[2]]
                     plt.bar(ending_cause_names, ending_causes, width=1, edgecolor="white", linewidth=0.7)
                     plt.title(f"Episode end causes of world{worlds.index(world) + 1} {n}-step epsilon: {epsilon} iteration: {it+1}")
                     plt.ylabel("Number of causes")
@@ -653,3 +653,25 @@ for world in worlds:
             plt.legend()
             plt.savefig(f"Learning_curve_world{worlds.index(world) + 1}_{n}-step_epsilon_{epsilon}.png")
             plt.close()
+
+            if config.LOGGING:
+                mean_of_goals = 0
+                mean_of_small_goals = 0
+                mean_of_holes = 0
+                for i in range(config.ITERATIONS):
+                    mean_of_goals += all_ending_causes[i][1]
+                    mean_of_small_goals += all_ending_causes[i][0]
+                    mean_of_holes += all_ending_causes[i][2]
+
+                mean_of_goals /= config.ITERATIONS
+                mean_of_small_goals /= config.ITERATIONS
+                mean_of_holes /= config.ITERATIONS
+                ending_cause_names = ["goal", "small goal", "hole"]
+                ending_causes = [mean_of_goals, mean_of_small_goals, mean_of_holes]
+                plt.bar(ending_cause_names, ending_causes, width=1, edgecolor="white", linewidth=0.7)
+                plt.title(
+                    f"Mean of episode end causes of world{worlds.index(world) + 1} {n}-step epsilon: {epsilon}")
+                plt.ylabel("Number of causes")
+                plt.xlabel("Type of cause")
+                plt.savefig(f"Ending_cause_{worlds.index(world) + 1}_{n}-step_epsilon_{epsilon}.png")
+                plt.close()
