@@ -23,7 +23,7 @@ np.random.seed(42)
 #         Q-Learning specifically: lines 440 - 458
 #                          Worlds: lines 526 - 581
 #                        Training: lines 584 - 610
-# Calculating values and plotting: lines 612 - 677
+# Calculating values and plotting: lines 612 - 679
 #
 # The environment can load and render with or without the directory of images
 # Running this file will result in training 9 configurations for my Q-learning algorithm
@@ -101,7 +101,7 @@ np.random.seed(42)
 # This class holds the input parameters for the algorithm and values for rendering
 #########################################################
 class config:
-    LOGGING: bool = False
+    LOGGING: bool = False  # If this is true the script will create and save about 400 plots
 
     GOAL_REWARD: int = 1000  # Reward for reaching g state
     SMALL_REWARD: int = 5  # Reward for reaching s state
@@ -655,6 +655,7 @@ for world in worlds:
             plt.close()
 
             if config.LOGGING:
+                #  Calculate of the means of why episodes ended throughout the 10 iterations
                 mean_of_goals = 0
                 mean_of_small_goals = 0
                 mean_of_holes = 0
@@ -668,10 +669,11 @@ for world in worlds:
                 mean_of_holes /= config.ITERATIONS
                 ending_cause_names = ["goal", "small goal", "hole"]
                 ending_causes = [mean_of_goals, mean_of_small_goals, mean_of_holes]
+                # Plot the causes of episode ends on a bar plot
                 plt.bar(ending_cause_names, ending_causes, width=1, edgecolor="white", linewidth=0.7)
                 plt.title(
                     f"Mean of episode end causes of world{worlds.index(world) + 1} {n}-step epsilon: {epsilon}")
                 plt.ylabel("Number of causes")
                 plt.xlabel("Type of cause")
-                plt.savefig(f"Ending_cause_{worlds.index(world) + 1}_{n}-step_epsilon_{epsilon}.png")
+                plt.savefig(f"Ending_cause_world{worlds.index(world) + 1}_{n}-step_epsilon_{epsilon}.png")
                 plt.close()
