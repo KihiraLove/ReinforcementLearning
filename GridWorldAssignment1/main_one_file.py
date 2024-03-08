@@ -647,9 +647,9 @@ for world in worlds:
                              np.mean(mean_rewards, axis=0) - standard_errors,
                              np.mean(mean_rewards, axis=0) + standard_errors,
                              color='black', alpha=0.2, label='Standard Error')
-            plt.xlabel('Episodes')
-            plt.ylabel('Total Reward')
-            plt.title('Mean Reward with Standard Error')
+            plt.xlabel("Episodes")
+            plt.ylabel("Total Reward")
+            plt.title(f"Mean Reward with Standard Error of\nworld{worlds.index(world) + 1} {n}-step epsilon: {epsilon}")
             plt.legend()
             plt.savefig(f"Learning_curve_world{worlds.index(world) + 1}_{n}-step_epsilon_{epsilon}.png")
             plt.close()
