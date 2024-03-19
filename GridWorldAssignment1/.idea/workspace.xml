@@ -5,16 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="47d6269b-a584-4a2e-9585-cacbf401aa87" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Ending_causes_world1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Ending_causes_world1.psd" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Ending_causes_world2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Ending_causes_world2.psd" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Learning_rates_world1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Learning_rates_world1.psd" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Learning_rates_world2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Learning_rates_world2.psd" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/~$planation.docx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_one_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_one_file.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../QLearning/DeepLearning-2-catdog.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,6 +99,7 @@
       <workItem from="1709890637152" duration="1894000" />
       <workItem from="1709893694428" duration="2991000" />
       <workItem from="1709909476099" duration="220000" />
+      <workItem from="1710432547116" duration="612000" />
     </task>
     <servers />
   </component>
