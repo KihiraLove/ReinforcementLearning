@@ -9,3 +9,4 @@ dist
 #/**/.idea
 /QLearning/PetImages
 /QLearning/MNIST
+*.KD-PC

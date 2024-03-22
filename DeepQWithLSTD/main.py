@@ -1,16 +1,26 @@
-import math
-import time
-import torch
+from collections import namedtuple, deque
+from itertools import count
+import gymnasium as gym
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib
+import math
 import random
-from collections import deque
-import gymnasium as gym
+import torch
+import time
 
+BATCH_SIZE = 128
+GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 1000
+TAU = 0.005
+ALPHA = 0.001
+
+Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
 
 
 # Define Deep Q-Network (DQN) with autoencoder for MountainCar
@@ -20,24 +30,18 @@ class AutoencoderDQN(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(observation_space, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
             nn.Linear(hidden_dim, action_space)
         )
         self.decoder = nn.Sequential(
             nn.Linear(action_space, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, observation_space),
-            nn.Tanh()
+            nn.Linear(hidden_dim, observation_space)
         )
 
     def forward(self, x):
         return self.decoder(self.encoder(x))
 
 
-# Define the LSTD algorithm
 class LSTD:
     def __init__(self, input_dim, output_dim, gamma, learning_rate):
         self.input_dim = input_dim
@@ -62,86 +66,136 @@ class LSTD:
         return np.dot(np.linalg.inv(self.A), self.b)
 
 
-# Define replay buffer for experience replay
-class ExperienceBuffer:
+class ExperienceBuffer(object):
     def __init__(self, capacity):
-        self.buffer = deque(maxlen=capacity)
+        self.buffer = deque([], maxlen=capacity)
 
     def add(self, state, action, reward, next_state):
-        self.buffer.append((state, action, reward, next_state))
+        self.buffer.append(Experience(state, action, next_state, reward))
 
     def sample(self, batch_size):
-        return zip(*random.sample(self.buffer, batch_size))
+        return random.sample(self.buffer, batch_size)
+
+    def __len__(self):
+        return len(self.buffer)
 
 
-def select_action(state):
-    global steps_done
-    sample = random.random()
-    eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-        math.exp(-1. * steps_done / EPS_DECAY)
+def select_action(env, state, steps_done, policy_model):
+    eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
-    if sample > eps_threshold:
+    if random.random() > eps_threshold:
         with torch.no_grad():
-            # t.max(1) will return the largest column value of each row.
-            # second column on max result is index of where max element was
-            # found, so we pick action with the larger expected reward.
-            return model(state).max(1).indices.view(1, 1)
+            return policy_model(state).max(1).indices.view(1, 1), steps_done
     else:
-        return torch.tensor([[env.action_space.sample()]], device='cpu', dtype=torch.long)
+        return torch.tensor([[env.action_space.sample()]], device='cpu', dtype=torch.long), steps_done
 
 
-# Example usage
-env_name = 'MountainCar-v0'
-episodes = 25000
+def plot_durations(episode_durations, show_result=False):
+    plt.figure(1)
+    durations_t = torch.tensor(episode_durations, dtype=torch.float)
+    if show_result:
+        plt.title('Result')
+    else:
+        plt.clf()
+        plt.title('Training...')
+    plt.xlabel('Episode')
+    plt.ylabel('Duration')
+    plt.plot(durations_t.numpy())
+    # Take 100 episode averages and plot them too
+    if len(durations_t) >= 100:
+        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
+        means = torch.cat((torch.zeros(99), means))
+        plt.plot(means.numpy())
+
+    plt.pause(0.001)
+
+
+def optimize_model():
+    if experience_buffer.__len__() < BATCH_SIZE:
+        return
+    transitions = experience_buffer.sample(BATCH_SIZE)
+    batch = Experience(*zip(*transitions))
+    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+    state_batch = torch.cat(batch.state)
+    action_batch = torch.cat(batch.action)
+    reward_batch = torch.cat(batch.reward)
+    state_action_values = policy_model(state_batch)
+    state_action_values = state_action_values.gather(1, action_batch)
+    next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    with torch.no_grad():
+        next_state_values[non_final_mask] = target_model(non_final_next_states).max(1).values
+    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+    loss = loss_function(state_action_values, expected_state_action_values.unsqueeze(1))
+    optimizer.zero_grad()
+    loss.backward()
+    torch.nn.utils.clip_grad_value_(policy_model.parameters(), 100)
+    optimizer.step()
+
+
+mountain_car_env_name = 'MountainCar-v0'
+acrobot_env_name = 'Acrobot-v1'
+pendulum_env_name = 'Pendulum-v0'
+episodes = 500
 max_steps = 500
 episode_grouping = 10
-batch_size = 32
-gamma = 0.99
-alpha = 0.001
 
-env = gym.make(env_name)
-input_dim = env.observation_space.shape[0]
-output_dim = env.action_space.n
+steps_done = 0
+episode_durations = []
 
-model = AutoencoderDQN(input_dim, output_dim)
+plt.ion()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+env = gym.make(mountain_car_env_name)
+state, _ = env.reset()
+n_observations = len(state)
+n_actions = env.action_space.n
+
+policy_model = AutoencoderDQN(n_observations, n_actions).to(device)
+target_model = AutoencoderDQN(n_observations, n_actions).to(device)
+target_model.load_state_dict(policy_model.state_dict())
+
 loss_function = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=alpha)
-lstd = LSTD(input_dim, output_dim, gamma, alpha)
+optimizer = optim.AdamW(policy_model.parameters(), lr=ALPHA, amsgrad=True)
+
+# lstd = LSTD(n_observations, n_actions, GAMMA, ALPHA)
 experience_buffer = ExperienceBuffer(capacity=5000)
-
-# Taking random actions to collect data
-for episode in range(episode_grouping):
-    state = env.reset()
-    total_reward = 0
-    terminated = False
-    while not terminated:
-        action = env.action_space.sample()
-        next_state, reward, terminated, _, _ = env.step(action)
-        total_reward += reward
-        experience_buffer.add(state, action, reward, next_state)
-        state = next_state
-
-print("Experience buffer filled with 10 episodes of random data")
 
 # Train autoencoder
 while episodes > 0:
     for episode in range(episode_grouping):
-        state, info = env.reset()
-        state = torch.tensor(state, dtype=torch.float32)
+        state, _ = env.reset()
+        state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
 
-        losses = []
         terminated = False
-        while not terminated:
-            env.render()
-            encoded, decoded = model(state)
-            loss = loss_function(decoded, state)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            losses.append(loss)
-            state, _, terminated, _, _ = env.step(encoded)
-            state = torch.tensor(state, dtype=torch.float32)
-            time.sleep(0.0001)
+        episode_duration = 0
+        while not terminated and episode_duration < max_steps:
+            action, steps_done = select_action(env, state, steps_done, policy_model)
+            observation, reward, terminated, truncated, _ = env.step(action.item())
+            done = terminated or truncated
+            reward = torch.tensor([reward], device=device)
 
-        env.close()
+            if done:
+                next_state = None
+            else:
+                next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+
+            experience_buffer.add(state, action, reward, next_state)
+            state = next_state
+            optimize_model()
+
+            target_net_state_dict = target_model.state_dict()
+            policy_net_state_dict = policy_model.state_dict()
+            for key in policy_net_state_dict:
+                target_net_state_dict[key] = policy_net_state_dict[key] * TAU + target_net_state_dict[key] * (1 - TAU)
+            target_model.load_state_dict(target_net_state_dict)
+            episode_duration += 1
+            if done or episode_duration == 500:
+                episode_durations.append(episode_duration)
+                plot_durations(episode_durations)
+
         episodes -= 1
+
+print('Complete')
+plot_durations(episode_durations, show_result=True)
+plt.ioff()
+plt.show()

@@ -155,7 +155,7 @@ def optimize_model():
     optimizer.step()
 
 
-env = gym.make("CartPole-v1")
+env = gym.make("MountainCar-v0")
 plt.ion()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -185,8 +185,6 @@ for i_episode in range(num_episodes):
     state, info = env.reset()
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     for t in count():
-        if i_episode % 10 == 0:
-            env.render()
         action = select_action(state)
         observation, reward, terminated, truncated, _ = env.step(action.item())
         reward = torch.tensor([reward], device=device)
@@ -213,9 +211,6 @@ for i_episode in range(num_episodes):
         for key in policy_net_state_dict:
             target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
         target_net.load_state_dict(target_net_state_dict)
-
-        if i_episode % 10 == 0:
-            time.sleep(0.001)
 
         if done:
             episode_durations.append(t + 1)
