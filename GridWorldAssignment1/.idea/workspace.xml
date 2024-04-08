@@ -5,8 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="47d6269b-a584-4a2e-9585-cacbf401aa87" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../QLearning/DeepLearning-2-catdog.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DeepQWithLSTD/DQNAgent.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DeepQWithLSTD/ExperienceBuffer.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DeepQWithLSTD/ExperienceSource.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DeepQWithLSTD/Functions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DeepQWithLSTD/LSDQN.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DeepQWithLSTD/RewardTracker.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../DeepQWithLSTD/TargetModel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DeepQWithLSTD/ls_dqn.py" beforeDir="false" afterPath="$PROJECT_DIR$/../DeepQWithLSTD/ls_dqn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DeepQWithLSTD/main.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -100,6 +107,7 @@
       <workItem from="1709893694428" duration="2991000" />
       <workItem from="1709909476099" duration="220000" />
       <workItem from="1710432547116" duration="612000" />
+      <workItem from="1712503006355" duration="947000" />
     </task>
     <servers />
   </component>
