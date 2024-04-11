@@ -102,23 +102,23 @@ def plot_durations(episode_durations, show_result=False):
 def unpack_batch(batch):
     states, actions, rewards, dones, next_states = [], [], [], [], []
     for exp in batch:
-        state = np.array(exp.state, copy=False)
+        state = np.array(exp.state.cpu(), copy=False)
         states.append(state)
-        actions.append(exp.action)
-        rewards.append(exp.reward)
+        actions.append(exp.action.cpu())
+        rewards.append(exp.reward.cpu())
         dones.append(exp.next_state is None)
         if exp.next_state is None:
             next_states.append(state)       # the result will be masked anyway
         else:
-            next_states.append(np.array(exp.next_state, copy=False))
+            next_states.append(np.array(exp.next_state.cpu(), copy=False))
     return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), np.array(dones, dtype=np.uint8), np.array(next_states, copy=False)
 
 
-def ls_step(net, tgt_net, batch, gamma, n_srl, lam, m_batch_size, device, n_observations, n_actions):
+def ls_step(net, tgt_net, batch, gamma, n_srl, lam, device):
     # Calculate FQI matrices
-    num_batches = n_srl // m_batch_size
-    dim = n_observations
-    num_actions = n_actions
+    num_batches = n_srl // 512
+    dim = net.hidden_layer.out_features
+    num_actions = net.output_layer.out_features
 
     A = torch.zeros([dim * num_actions, dim * num_actions], dtype=torch.float32).to(device)
     A_bias = torch.zeros([1 * num_actions, 1 * num_actions], dtype=torch.float32).to(device)
@@ -126,16 +126,16 @@ def ls_step(net, tgt_net, batch, gamma, n_srl, lam, m_batch_size, device, n_obse
     b_bias = torch.zeros([1 * num_actions, 1], dtype=torch.float32).to(device)
 
     for i in range(num_batches):
-        idx = i * m_batch_size
+        idx = i * 512
         if i == num_batches - 1:
             states, actions, rewards, dones, next_states = unpack_batch(batch[idx:])
         else:
-            states, actions, rewards, dones, next_states = unpack_batch(batch[idx: idx + m_batch_size])
-        states_v = torch.tensor(states).to(device)
+            states, actions, rewards, dones, next_states = unpack_batch(batch[idx: idx + 512])
+        states_v = torch.tensor(states, dtype=torch.float32).to(device)
         next_states_v = torch.tensor(next_states).to(device)
         actions_v = torch.tensor(actions).to(device)
         rewards_v = torch.tensor(rewards).to(device)
-        done_mask = torch.ByteTensor(dones).to(device)
+        done_mask = torch.BoolTensor(dones).to(device)
 
         states_features = net.forward_to_last_hidden(states_v)
         # Augmentation
@@ -149,12 +149,13 @@ def ls_step(net, tgt_net, batch, gamma, n_srl, lam, m_batch_size, device, n_obse
         states_features_mat = torch.mm(torch.t(states_features_aug), states_features_aug)
         states_features_bias_mat = torch.mm(torch.t(states_features_bias_aug), states_features_bias_aug)
         next_state_values = tgt_net(next_states_v).max(1)[0]
+
         next_state_values[done_mask] = 0.0
 
         expected_state_action_values = next_state_values.detach() * gamma + rewards_v  # y_i
 
-        b += torch.mm(torch.t(states_features_aug.detach()), expected_state_action_values.detach().view(-1, 1))
-        b_bias += torch.mm(torch.t(states_features_bias_aug), expected_state_action_values.detach().view(-1, 1))
+        b += torch.mm(torch.t(states_features_aug.detach()), expected_state_action_values.detach().mean(dim=1, keepdim=True))
+        b_bias += torch.mm(torch.t(states_features_bias_aug), expected_state_action_values.detach().mean(dim=1, keepdim=True))
         A += states_features_mat.detach()
         A_bias += states_features_bias_mat
 
@@ -192,7 +193,7 @@ def decay_epsilon(current_epsilon):
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-env = gym.make("MountainCar-v0")
+env = gym.make("Pendulum-v1")
 n_actions = env.action_space.n
 state, _ = env.reset()
 n_observations = len(state)
@@ -271,13 +272,11 @@ for episode in range(MAX_EPISODES):
         torch.nn.utils.clip_grad_value_(lsdqn_model.parameters(), 100)
         optimizer.step()
 
-        drl_updates += 1
-
         # LS-UPDATE STEP
-        if (drl_updates % n_drl == 0) and (len(experience_buffer) >= n_srl):
+        if drl_updates % n_drl == 0:
             print("performing ls step...")
             batch = experience_buffer.get_batch(n_srl)
-            ls_step(lsdqn_model, target_model, batch, GAMMA, len(batch), LAMBDA, BATCH_SIZE, device, n_observations, n_actions)
+            ls_step(lsdqn_model, target_model, batch, GAMMA, len(batch), LAMBDA, device)
 
         if episode % target_update_freq == 0 and episode != 0:
             target_model.load_state_dict(lsdqn_model.state_dict())
@@ -286,11 +285,12 @@ for episode in range(MAX_EPISODES):
             episode_durations.append(episode_duration)
             plot_durations(episode_durations)
 
+        drl_updates += 1
         episode_duration += 1
 
     epsilon = decay_epsilon(epsilon)
 
 print('Complete')
-plot_durations(show_result=True)
+plot_durations(show_result=True, episode_durations=episode_durations)
 plt.ioff()
 plt.show()
