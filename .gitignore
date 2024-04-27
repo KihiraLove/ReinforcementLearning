@@ -6,7 +6,10 @@ dist
 *.egg-info
 /**/.DS_Store
 *.pickle
-#/**/.idea
+/**/.idea
+/**/.venv
 /QLearning/PetImages
 /QLearning/MNIST
 *.KD-PC
+PokemonRedPPO/PokemonRed.gb
+/**/session_*

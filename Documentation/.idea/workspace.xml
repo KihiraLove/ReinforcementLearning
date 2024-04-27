@@ -2,9 +2,42 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e1cff040-85ec-4555-a445-2ef0edadb48a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../QLearning/DeepLearning-2-catdog.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/LICENSE" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/PPO.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/agent_enabled.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/delete_empty_imgs.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/grid_renders/parallel_scripts/parallel_grid_convert.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/memory_addresses.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/red_gym_env.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/render_all_needed_grids.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/render_all_needed_grids.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/requirements-unfrozen.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/run_baseline_parallel.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/run_baseline_parallel_fast.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/run_pretrained_interactive.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/run_recorded_actions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/saves_to_record.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/stream_agent_wrapper.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/tensorboard_callback.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/baselines/tile_vids_to_grid.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/fast_text_start.state" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/has_pokedex.state" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/has_pokedex_nballs.state" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/init.state" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/BetterMapVis_script_version.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/BetterMapVis_script_version_FLOW.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/BetterMapVis_script_version_FLOW_edge.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/BetterMapVis_script_version_PROG_COLOR.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/poke_map/characters.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/poke_map/pokemap_full_calibrated_CROPPED_1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/poke_map/pokemap_full_rough.psd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/poke_map/transparent_arrow.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/visualization/sprites/characters.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../PokemonRedPPO/windows-setup-guide.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GridWorldAssignment1/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../GridWorldAssignment1/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,10 +83,14 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 3
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
   <component name="ProjectId" id="2djCB7JZGmRFzqgB2eCAPjABcQs" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -61,8 +98,7 @@
     "ignore.virus.scanning.warn.message": "true"
   },
   "keyToStringList": {
-    "stardust.markdown.MarkdownSplitEditorSuppressor:keyList": [
-    ]
+    "stardust.markdown.MarkdownSplitEditorSuppressor:keyList": []
   }
 }]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
