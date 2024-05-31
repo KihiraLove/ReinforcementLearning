@@ -1,6 +1,5 @@
 import sys
-import uuid 
-import os
+import uuid
 from math import floor, sqrt
 import json
 from pathlib import Path
@@ -10,7 +9,6 @@ from einops import rearrange
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 from pyboy import PyBoy
-#from pyboy.logger import log_level
 import hnswlib
 import mediapy as media
 import pandas as pd
@@ -95,7 +93,6 @@ class RedGymEnv(Env):
 
         head = 'headless' if config['headless'] else 'SDL2'
 
-        #log_level("ERROR")
         self.pyboy = PyBoy(
                 config['gb_path'],
                 debugging=False,
@@ -494,8 +491,6 @@ class RedGymEnv(Env):
     )
 
     def get_game_state_reward(self, print_stats=False):
-        # addresses from https://datacrystal.romhacking.net/wiki/Pok%C3%A9mon_Red/Blue:RAM_map
-        # https://github.com/pret/pokered/blob/91dc3c9f9c8fd529bb6e8307b58b96efa0bec67e/constants/event_constants.asm
         '''
         num_poke = self.read_m(0xD163)
         poke_xps = [self.read_triple(a) for a in [0xD179, 0xD1A5, 0xD1D1, 0xD1FD, 0xD229, 0xD255]]
